@@ -88,5 +88,33 @@
     return value.toLocaleString('es-CO',{minimumFractionDigits:1,maximumFractionDigits:2});
   }
 
-  global.PhFieldLogic=Object.freeze({CAFE,classify,targetForArea,median,summarize,decodeYinmikFrame,decodeReading,scalePosition,formatPh});
+  function csvNumber(value){
+    return Number.isFinite(value)?String(value).replace('.',','):'';
+  }
+
+  function csvCell(value){
+    const text=value===null||value===undefined?'':String(value);
+    return /[;"\r\n]/.test(text)?`"${text.replace(/"/g,'""')}"`:text;
+  }
+
+  function buildJourneyCsv(journey){
+    const headers=[
+      'jornada_id','finca_codigo','finca','lote_codigo','lote','area_ha','ano_siembra','fecha_jornada',
+      'punto','ph','categoria','temperatura_c','fuente','latitud','longitud','precision_gps_m','fecha_punto'
+    ];
+    const rows=(journey.points||[]).map(point=>[
+      journey.id,journey.farmId,journey.farmName,journey.lotId,journey.lotName,csvNumber(journey.areaHa),journey.plantingYear,journey.completedAt,
+      point.sequence,csvNumber(point.ph),classify(point.ph),csvNumber(point.temperatureC),point.source,
+      csvNumber(point.location&&point.location.latitude),csvNumber(point.location&&point.location.longitude),csvNumber(point.location&&point.location.accuracy),point.recordedAt
+    ]);
+    return `\uFEFF${[headers,...rows].map(row=>row.map(csvCell).join(';')).join('\r\n')}`;
+  }
+
+  function journeyFilename(journey){
+    const lot=String(journey.lotName||'lote').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+    const date=String(journey.completedAt||new Date().toISOString()).slice(0,10);
+    return `ph-field-${lot||'lote'}-${date}.csv`;
+  }
+
+  global.PhFieldLogic=Object.freeze({CAFE,classify,targetForArea,median,summarize,decodeYinmikFrame,decodeReading,scalePosition,formatPh,buildJourneyCsv,journeyFilename});
 })(globalThis);
