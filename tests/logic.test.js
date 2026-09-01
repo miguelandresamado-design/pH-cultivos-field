@@ -36,6 +36,16 @@ assert.equal(reading.ph,8.2);
 assert.equal(reading.temperatureC,26);
 assert.equal(reading.rawPayload,hex);
 
+const journey={
+  id:'J-1',farmId:'FIN-001',farmName:'El Porvenir',lotId:'LOT-001',lotName:'Lote Norte',areaHa:1.8,plantingYear:2021,completedAt:'2026-09-01T15:00:00.000Z',
+  points:[{sequence:1,ph:5.2,temperatureC:24.6,source:'bluetooth',recordedAt:'2026-09-01T14:55:00.000Z',location:{latitude:4.8612,longitude:-74.0583,accuracy:14}}]
+};
+const csv=Logic.buildJourneyCsv(journey);
+assert.ok(csv.startsWith('\uFEFFjornada_id;'));
+assert.ok(csv.includes('J-1;FIN-001;El Porvenir;LOT-001;Lote Norte;1,8;2021'));
+assert.ok(csv.includes(';1;5,2;ADECUADO;24,6;bluetooth;4,8612;-74,0583;14;'));
+assert.equal(Logic.journeyFilename(journey),'ph-field-lote-norte-2026-09-01.csv');
+
 assert.equal(Logic.decodeReading(new DataView(new ArrayBuffer(3))),null);
 assert.throws(()=>Logic.classify(14.1),RangeError);
 assert.throws(()=>Logic.targetForArea(0),RangeError);
