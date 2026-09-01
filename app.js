@@ -42,6 +42,9 @@
   let currentReading=null;
   let bluetoothDevice=null;
   let bluetoothCharacteristic=null;
+  let bluetoothPollTimer=null;
+  let bluetoothReadPending=false;
+  let savingPoint=false;
 
   function id(){
     return globalThis.crypto&&typeof globalThis.crypto.randomUUID==='function'?globalThis.crypto.randomUUID():`${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -69,6 +72,7 @@
   function showScreen(index){
     elements.screens.forEach((screen,screenIndex)=>{screen.hidden=screenIndex!==index;});
     elements.stepLabel.textContent=`${index+1} de 3`;
+    if(index===1)startBluetoothPolling();else stopBluetoothPolling();
     globalThis.scrollTo({top:0,behavior:'smooth'});
   }
 
@@ -186,6 +190,8 @@
     if(!currentReading||!draft||draft.points.length>=draft.target)return;
     const reading=currentReading;
     currentReading=null;
+    savingPoint=true;
+    stopBluetoothPolling();
     elements.savePointButton.disabled=true;elements.savePointButton.textContent='Guardando…';
     const gps=await captureLocation();
     draft.points.push({
@@ -195,6 +201,11 @@
     persistDraft();
     elements.gpsStatus.textContent=gps.message;elements.manualPh.value='';elements.savePointButton.textContent='Guardar punto';
     updateCapture();
+    savingPoint=false;
+    if(draft.points.length<draft.target&&bluetoothCharacteristic){
+      elements.bluetoothStatus.textContent='Punto guardado. Obteniendo la lectura del siguiente punto…';
+      startBluetoothPolling();
+    }
   }
 
   function openResult(){
@@ -224,10 +235,11 @@
   }
 
   function handleDisconnected(){
-    bluetoothCharacteristic=null;setConnected(false);elements.bluetoothStatus.textContent='El medidor se desconectó.';
+    stopBluetoothPolling();bluetoothCharacteristic=null;setConnected(false);elements.bluetoothStatus.textContent='El medidor se desconectó.';
   }
 
   function receiveBluetooth(value){
+    if(savingPoint)return;
     const decoded=Logic.decodeReading(value);
     if(!decoded){elements.bluetoothStatus.textContent='Se recibió un paquete que no pudo interpretarse.';return;}
     useReading({...decoded,source:'bluetooth',device:{name:bluetoothDevice&&bluetoothDevice.name?bluetoothDevice.name:'YK-S01',serviceUuid:YINMIK_SERVICE,characteristicUuid:YINMIK_MEASUREMENT}});
@@ -235,6 +247,26 @@
   }
 
   function handleNotification(event){receiveBluetooth(event.target.value);}
+
+  function stopBluetoothPolling(){
+    if(bluetoothPollTimer!==null){globalThis.clearInterval(bluetoothPollTimer);bluetoothPollTimer=null;}
+  }
+
+  async function refreshBluetoothReading(){
+    if(!bluetoothCharacteristic||bluetoothReadPending||savingPoint||!draft)return;
+    bluetoothReadPending=true;
+    try{receiveBluetooth(await bluetoothCharacteristic.readValue());}
+    catch(error){
+      if(bluetoothDevice&&bluetoothDevice.gatt&&bluetoothDevice.gatt.connected)elements.bluetoothStatus.textContent='Conectado. Esperando la siguiente lectura del medidor…';
+    }finally{bluetoothReadPending=false;}
+  }
+
+  function startBluetoothPolling(){
+    stopBluetoothPolling();
+    if(!bluetoothCharacteristic||!draft||savingPoint)return;
+    refreshBluetoothReading();
+    bluetoothPollTimer=globalThis.setInterval(refreshBluetoothReading,2000);
+  }
 
   async function connectBluetooth(){
     if(!('bluetooth' in navigator))return;
@@ -247,7 +279,7 @@
       bluetoothCharacteristic=await service.getCharacteristic(YINMIK_MEASUREMENT);
       bluetoothCharacteristic.addEventListener('characteristicvaluechanged',handleNotification);
       await bluetoothCharacteristic.startNotifications();setConnected(true);elements.bluetoothStatus.textContent='Conectado. Esperando lectura del medidor…';
-      try{receiveBluetooth(await bluetoothCharacteristic.readValue());}catch(error){}
+      startBluetoothPolling();
     }catch(error){
       if(bluetoothDevice&&bluetoothDevice.gatt&&bluetoothDevice.gatt.connected)bluetoothDevice.gatt.disconnect();
       setConnected(false);
@@ -256,6 +288,7 @@
   }
 
   function disconnectBluetooth(){
+    stopBluetoothPolling();
     if(bluetoothCharacteristic)bluetoothCharacteristic.removeEventListener('characteristicvaluechanged',handleNotification);
     if(bluetoothDevice&&bluetoothDevice.gatt&&bluetoothDevice.gatt.connected)bluetoothDevice.gatt.disconnect();else handleDisconnected();
   }
