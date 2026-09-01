@@ -19,6 +19,8 @@ Este proyecto es independiente de `pH-cultivos`. La primera versión se concentr
 - Actualización activa de la lectura Bluetooth durante el recorrido y después de guardar cada punto.
 - Temperatura y paquete original cuando la lectura proviene del YINMIK YK-S01.
 - Ubicación opcional en cada punto.
+- Detalle de cada punto con coordenadas, precisión y enlace al mapa.
+- Exportación CSV mediante descarga o la hoja de compartir del teléfono.
 - Resultado con mediana, rango observado y puntos en el rango adecuado.
 - Guardado local y funcionamiento sin conexión después de la primera carga.
 
