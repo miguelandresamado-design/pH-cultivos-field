@@ -1,13 +1,13 @@
 'use strict';
 
-const CACHE_NAME='ph-cultivos-field-v4';
+const CACHE_NAME='ph-cultivos-field-v5';
 const APP_ASSETS=[
   './',
   './index.html',
-  './styles.css?v=0.3',
-  './logic.js?v=0.3',
-  './app.js?v=0.3',
-  './manifest.json?v=0.3',
+  './styles.css?v=0.3.1',
+  './logic.js?v=0.3.1',
+  './app.js?v=0.3.1',
+  './manifest.json?v=0.3.1',
   './icon.svg',
   './icon-192.png',
   './icon-512.png'
