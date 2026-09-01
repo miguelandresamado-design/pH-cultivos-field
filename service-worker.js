@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME='ph-cultivos-field-v1';
+const CACHE_NAME='ph-cultivos-field-v2';
 const APP_ASSETS=[
   './',
   './index.html',
