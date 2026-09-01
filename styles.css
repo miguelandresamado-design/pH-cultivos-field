@@ -48,6 +48,16 @@ summary{min-height:48px;padding:14px 0;cursor:pointer;font-weight:750}
 .history-item{padding:13px 0;border-top:1px solid var(--line)}
 .history-title{display:flex;justify-content:space-between;gap:12px;font-weight:750}
 .history-meta{margin-top:4px;color:var(--muted);font-size:12px}
+.history-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
+.compact-button{min-height:40px;padding:8px 12px;font-size:13px}
+.point-detail{margin-top:10px;padding:2px 12px;border-radius:13px;background:var(--soft)}
+.point-row{padding:13px 0;border-bottom:1px solid var(--line)}
+.point-row:last-of-type{border-bottom:0}
+.point-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.point-meta,.point-gps,.export-hint{margin-top:5px;color:var(--muted);font-size:12px;line-height:1.45}
+.point-gps{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.point-gps a{flex:none;color:var(--forest);font-weight:750}
+.export-hint{margin:10px 0 12px}
 .back-button{min-height:44px;margin:-10px 0 8px -8px;padding:8px;border:0;background:transparent;color:var(--muted);font-weight:700;cursor:pointer}
 .capture-head,.reading-head,.progress-head,.result-line{display:flex;align-items:center;justify-content:space-between;gap:14px}
 .capture-head h1{font-size:26px}
@@ -73,5 +83,5 @@ summary{min-height:48px;padding:14px 0;cursor:pointer;font-weight:750}
 .result-line{padding:15px 0;border-bottom:1px solid var(--line)}
 .disclaimer{margin:20px 0 0}
 footer{padding:14px;text-align:center;color:var(--muted);font-size:12px}
-@media(max-width:360px){body{padding-inline:10px}.topbar,.surface{padding-inline:16px}.capture-head{align-items:flex-start;flex-direction:column;gap:8px}.bluetooth-actions{align-items:stretch;flex-direction:column}.bluetooth-actions button{width:100%}.surface{min-height:570px}}
+@media(max-width:360px){body{padding-inline:10px}.topbar,.surface{padding-inline:16px}.capture-head{align-items:flex-start;flex-direction:column;gap:8px}.bluetooth-actions,.history-actions,.point-gps{align-items:stretch;flex-direction:column}.bluetooth-actions button,.history-actions button{width:100%}.surface{min-height:570px}}
 @media(prefers-reduced-motion:reduce){.scale-marker,.progress-fill{transition:none}}
