@@ -9,15 +9,15 @@
 
   const farms=[
     {
-      id:'FIN-001',name:'El Porvenir',municipality:'Pitalito',department:'Huila',
+      id:'FIN-001',name:'Finca Demostración 1',
       lots:[
-        {id:'LOT-001',name:'Lote Norte',areaHa:1.8,plantingYear:2021},
-        {id:'LOT-002',name:'Lote Ladera',areaHa:2.7,plantingYear:2017,renewalYear:2024}
+        {id:'LOT-001',name:'Lote 1',areaHa:1.8,plantingYear:2021},
+        {id:'LOT-002',name:'Lote 2',areaHa:2.7,plantingYear:2017,renewalYear:2024}
       ]
     },
     {
-      id:'FIN-002',name:'La Esperanza',municipality:'Acevedo',department:'Huila',
-      lots:[{id:'LOT-003',name:'Lote Alto',areaHa:1.2,plantingYear:2020}]
+      id:'FIN-002',name:'Finca Demostración 2',
+      lots:[{id:'LOT-003',name:'Lote 3',areaHa:1.2,plantingYear:2020}]
     }
   ];
 
@@ -118,8 +118,60 @@
       const name=document.createElement('span');name.textContent=`${journey.farmName} · ${journey.lotName}`;
       const ph=document.createElement('span');ph.textContent=`pH ${Logic.formatPh(journey.summary.representative)}`;
       const meta=document.createElement('div');meta.className='history-meta';meta.textContent=`${journey.points.length} puntos · ${journey.summary.category} · ${formatDate(journey.completedAt)}`;
-      title.append(name,ph);item.append(title,meta);elements.historyList.appendChild(item);
+      const controls=document.createElement('div');controls.className='history-actions';
+      const toggle=document.createElement('button');toggle.type='button';toggle.className='text-button';toggle.textContent='Ver puntos';
+      const exportButton=document.createElement('button');exportButton.type='button';exportButton.className='secondary-button compact-button';exportButton.textContent='Exportar CSV';
+      const detail=document.createElement('div');detail.className='point-detail';detail.hidden=true;
+      (journey.points||[]).forEach(point=>detail.appendChild(renderPoint(journey,point)));
+      const exportHint=document.createElement('p');exportHint.className='export-hint';exportHint.textContent='En iPhone, selecciona “Guardar en Archivos” en la hoja de compartir.';
+      detail.appendChild(exportHint);
+      toggle.addEventListener('click',()=>{detail.hidden=!detail.hidden;toggle.textContent=detail.hidden?'Ver puntos':'Ocultar puntos';});
+      exportButton.addEventListener('click',()=>exportJourney(journey));
+      controls.append(toggle,exportButton);
+      title.append(name,ph);item.append(title,meta,controls,detail);elements.historyList.appendChild(item);
     });
+  }
+
+  function mapUrl(point){
+    const latitude=point.location.latitude;const longitude=point.location.longitude;
+    const apple=/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent);
+    return apple
+      ?`https://maps.apple.com/?ll=${encodeURIComponent(`${latitude},${longitude}`)}&q=${encodeURIComponent(`Punto ${point.sequence}`)}`
+      :`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude},${longitude}`)}`;
+  }
+
+  function renderPoint(journey,point){
+    const row=document.createElement('div');row.className='point-row';
+    const head=document.createElement('div');head.className='point-head';
+    const sequence=document.createElement('strong');sequence.textContent=`Punto ${point.sequence}`;
+    const ph=document.createElement('strong');ph.textContent=`pH ${Logic.formatPh(point.ph)}`;
+    head.append(sequence,ph);
+    const reading=document.createElement('div');reading.className='point-meta';
+    const temperature=Number.isFinite(point.temperatureC)?` · ${Logic.formatPh(point.temperatureC)} °C`:'';
+    reading.textContent=`${Logic.classify(point.ph)}${temperature} · ${point.source==='bluetooth'?'Bluetooth':'Manual'}`;
+    const gps=document.createElement('div');gps.className='point-gps';
+    if(point.location){
+      const coordinates=document.createElement('span');
+      coordinates.textContent=`${point.location.latitude.toFixed(6)}, ${point.location.longitude.toFixed(6)} · ±${Math.round(point.location.accuracy)} m`;
+      const link=document.createElement('a');link.href=mapUrl(point);link.target='_blank';link.rel='noopener noreferrer';link.textContent='Abrir en mapa';
+      gps.append(coordinates,link);
+    }else{gps.textContent='Sin ubicación GPS';}
+    row.append(head,reading,gps);
+    return row;
+  }
+
+  async function exportJourney(journey){
+    const csv=Logic.buildJourneyCsv(journey);const filename=Logic.journeyFilename(journey);
+    if(typeof File==='function'&&navigator.share){
+      const file=new File([csv],filename,{type:'text/csv;charset=utf-8'});
+      if(!navigator.canShare||navigator.canShare({files:[file]})){
+        try{await navigator.share({files:[file],title:`Muestreo ${journey.lotName}`});return;}
+        catch(error){if(error&&error.name==='AbortError')return;}
+      }
+    }
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);
+    const link=document.createElement('a');link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();
+    globalThis.setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
 
   function startJourney(){
