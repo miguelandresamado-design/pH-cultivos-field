@@ -16,6 +16,7 @@ Este proyecto es independiente de `pH-cultivos`. La primera versión se concentr
 - Fincas y lotes de demostración, sin datos personales.
 - Área y año de siembra por lote.
 - Captura de pH por Bluetooth o ingreso manual.
+- Actualización activa de la lectura Bluetooth durante el recorrido y después de guardar cada punto.
 - Temperatura y paquete original cuando la lectura proviene del YINMIK YK-S01.
 - Ubicación opcional en cada punto.
 - Resultado con mediana, rango observado y puntos en el rango adecuado.
